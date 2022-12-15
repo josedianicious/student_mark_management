@@ -37,4 +37,8 @@ class Student extends Model
     }
 
     protected $appends = ['gender_text'];
+
+    public function teacher(){
+        return $this->belongsTo(Teacher::class,'teacher_id','teacher_id');
+    }
 }

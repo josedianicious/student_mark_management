@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Student;
+use App\Models\Teacher;
 use Illuminate\Http\Request;
 
 class StudentController extends Controller
@@ -13,7 +15,8 @@ class StudentController extends Controller
      */
     public function index()
     {
-        return view('student.index');
+        $students = Student::latest()->paginate(10);
+        return view('students.index',compact('students'));
     }
 
     /**
@@ -23,7 +26,8 @@ class StudentController extends Controller
      */
     public function create()
     {
-        //
+        $teachers = Teacher::get();
+        return view('students.create',compact('teachers'));
     }
 
     /**
@@ -34,7 +38,29 @@ class StudentController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        $request->validate(
+            [
+                'student_name' => 'required|regex:/[a-zA-Z .\s]+/',
+                'student_email' => 'required|unique:students,student_email|email',
+                'student_phone_number' => 'required|regex:/[0-9 -+]{9,15}/',
+                'gender' =>'required',
+                'teacher_id' => 'required'
+            ],
+            [
+                'student_phone_number.required' => "The Student Phone Number field is required."
+            ]
+        );
+        $inputs = [
+            'student_name' => $request->student_name,
+            'student_email' => $request->student_email,
+            'mobile_number' => $request->student_phone_number,
+            'gender' => $request->gender,
+            'teacher_id' => $request->teacher_id
+        ];
+        Student::create(
+            $inputs
+        );
+        return redirect()->route('student.index')->with('success','You have successfully created the student.');
     }
 
     /**
@@ -56,7 +82,9 @@ class StudentController extends Controller
      */
     public function edit($id)
     {
-        //
+        $student = Student::find(decrypt($id));
+        $teachers = Teacher::get();
+        return view('students.edit',compact('student','teachers'));
     }
 
     /**
@@ -68,7 +96,29 @@ class StudentController extends Controller
      */
     public function update(Request $request, $id)
     {
-        //
+        $request->validate(
+            [
+                'student_name' => 'required|regex:/[a-zA-Z .\s]+/',
+                'student_email' => 'required|email|unique:students,student_email,'.decrypt($id).',student_id',
+                'student_phone_number' => 'required|regex:/[0-9 -+]{9,15}/',
+                'gender' =>'required',
+                'teacher_id' => 'required'
+            ],[
+            'student_phone_number.required' => "The Student Phone Number field is required."
+            ]
+        );
+        $inputs = [
+            'student_name' => $request->student_name,
+            'student_email' => $request->student_email,
+            'mobile_number' => $request->student_phone_number,
+            'gender' => $request->gender,
+            'teacher_id' => $request->teacher_id
+        ];
+
+        $student_update = Student::find(decrypt($id));
+        $student_update->update($inputs);
+
+        return redirect()->route('student.index')->with('success','You have successfully update the student details.');
     }
 
     /**
@@ -79,6 +129,8 @@ class StudentController extends Controller
      */
     public function destroy($id)
     {
-        //
+        $student_del = Student::find(decrypt($id));
+        $student_del->delete();
+        return redirect()->route('student.index')->with('success','You have successfully deleted the student.');
     }
 }
